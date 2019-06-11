@@ -1,6 +1,6 @@
-# ProjetoLogica
+# Projeto de Logica 2019.1
 
- ## Descrição: :newspaper:
+ ## Descrição :newspaper:
  Estamos criando uma máquina de venda de café, chocolate quente e chá.
 
  ## Especificação :pushpin:
