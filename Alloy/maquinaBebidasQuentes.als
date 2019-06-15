@@ -4,6 +4,11 @@ module MaquinaBebidasQuentes
 --		   ASSINATURAS	            --
 ----------------------------------------------------------
 
+
+sig Maquina{
+    bebida: lone Bebida
+}
+
 abstract sig Bebida{
    tamanho: one Tamanho,
    adocamento: one Adocamento,
@@ -44,6 +49,21 @@ sig Adocante extends Adocamento{
 ----------------------------------------------------------
 --			FATOS		       --
 ----------------------------------------------------------
+fact bebidaRequerMaquina{
+   all b : Bebida | #(b.~bebida) = 1
+}
+
+fact adicionalRequerBebida{
+   all a: Adicional | #(a.~adicional) > 0
+}
+
+fact tamanhoRequerBebida{
+   all t: Tamanho | #(t.~tamanho) > 0
+}
+
+fact adocamentoRequerBebida{
+  all a: Adocamento | #(a.~adocamento) > 0
+}
 
 
 
@@ -51,8 +71,19 @@ sig Adocante extends Adocamento{
 --		        RUN		       --
 ----------------------------------------------------------
 pred show[] {}
-run show for 3
+run show for 15
 
 -----------------------------------------------------------
 --			ASSERTS			 --
 -----------------------------------------------------------
+
+
+-----------------------------------------------------------
+--			CHECKS			 --
+-----------------------------------------------------------
+
+
+
+
+
+
