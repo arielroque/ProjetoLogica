@@ -1,0 +1,44 @@
+MODULE main
+
+VAR
+
+    bebida: { cafe, cha, chocolate_quente };
+    tamanhoCopo: { grande, pequeno };
+    leite: { com_leite, sem_leite };
+    formaAdocar: { acucar, adocante, sem_adocante };
+    cancelado: boolean;
+
+ASSIGN
+
+    init(bebida) := cafe;
+    init(tamanhoCopo) := pequeno;
+    init(leite) := sem_leite;
+    init(formaAdocar) := sem_adocante;
+    init(cancelado) := TRUE;
+
+    next(bebida) := case
+                     bebida = cafe : { cafe, cha, chocolate_quente };
+                     bebida = cha : { cafe, cha, chocolate_quente };
+                     bebida = chocolate_quente : { cafe, cha, chocolate_quente };
+                    esac;
+    
+    next(tamanhoCopo) := case
+                            tamanhoCopo = grande : { grande, pequeno };
+                            tamanhoCopo = pequeno : { grande, pequeno };
+                         esac;
+    
+    next(leite) := case
+                    leite = sem_leite : { com_leite, sem_leite };
+                    leite = com_leite : { com_leite, sem_leite };
+                   esac;
+
+    next(formaAdocar) := case
+                        formaAdocar = sem_adocante : { acucar, adocante, sem_adocante };
+                        formaAdocar = acucar : { acucar, adocante, sem_adocante };
+                        formaAdocar = adocante : { acucar, adocante, sem_adocante };
+                     esac;
+
+    next(cancelado) := case
+                        cancelado = TRUE : TRUE;
+                        cancelado = FALSE : FALSE;
+                       esac;
