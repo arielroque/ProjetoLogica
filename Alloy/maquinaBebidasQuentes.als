@@ -9,20 +9,16 @@ sig Maquina{
     valorInserido: one Int,
     troco: one Int,
     status: one Status
-    
 }
 
 abstract sig Status{}
-
 sig PedidoFinalizado extends Status{}
 sig PedidoEmFalta extends Status{}
 sig PedidoCancelado extends Status{}
 
 
 abstract sig BotaoCancelar{}
-
 sig BotaoDeCancelamentoAtivado extends BotaoCancelar{}
-
 sig BotaoDeCancelamentoDesativado extends BotaoCancelar{}
 
 abstract sig Bebida{
@@ -32,25 +28,18 @@ abstract sig Bebida{
 }
 
 sig Cafe extends Bebida{}
-
 sig ChocolateQuente extends Bebida{}
-
 sig Cha extends Bebida{}
 
 abstract sig Tamanho{}
-
 sig TamanhoGrande extends Tamanho{}
-
 sig TamanhoPequeno extends Tamanho{}
 
 abstract sig Adicional{}
-
 sig Leite extends Adicional{}
 
 abstract sig Adocamento {}
-
 sig Acucar extends Adocamento{}
-
 sig Adocante extends Adocamento{}
 ----------------------------------------------------------
 --			FATOS		       --
@@ -106,22 +95,17 @@ fact statusRequerMaquina{
   all s: Status | #(s.~status) > 0  
 }
 
-fact trocoDaMaquina{
+fact trocoMaquina{
   all m: Maquina | trocoMoeda50[m]
   all m: Maquina | trocoMoeda25[m]
   all m: Maquina | trocoVazio[m]
 }
 
-fact trocoComBebidaIndisponivel{
-  all m: Maquina | bebidaIndisponivel[m]
-}
-
 fact statusPedido{
-  all m : Maquina | bebidaFinalizada[m]
-  all m : Maquina | bebidaCancelada[m]
-  all m : Maquina | bebidaEmFalta[m]
+   all m: Maquina | statusCancelado[m]
+   all m: Maquina | statusEmFalta[m]
+   all m: Maquina | statusFinalizado[m]
 }
-
 
 ----------------------------------------------------------
 --			PREDICADOS	       --
@@ -131,33 +115,26 @@ pred moedasPermitidas[m: Maquina]{
 }
 
 pred trocoMoeda50[m : Maquina]{
- //m.troco = getTroco[m]
-  getTroco[m] > 49 => m.troco = 50 
+ (calcularTroco[m] > 49) => (getTroco[m] = 50) 
 }
 
 pred trocoMoeda25[m : Maquina]{
- //m.troco = getTroco[m]
-  getTroco[m] > 24 && getTroco[m] < 50 => m.troco = 25
+  (calcularTroco[m]) > 24 && (calcularTroco[m]) < 50 =>  (getTroco[m] = 25)
 }
 pred trocoVazio[m : Maquina]{
- //m.troco = getTroco[m]
-  getTroco[m] < 25 => m.troco = 0 || m.botaoDeCancelamento = BotaoDeCancelamentoAtivado => m.troco = 0 
+  (calcularTroco[m] < 25) => (getTroco[m] = 0) 
 }
 
-pred bebidaIndisponivel[m : Maquina]{
-  #(m.bebida) = 0 => m.troco = m.valorInserido
+pred statusCancelado [m: Maquina] {
+	(#getBotaoAtivado[m] > 0) => (#getPedidoCancelado[m] > 0) &&  (getTroco[m] = 0)
 }
 
-pred bebidaFinalizada[m: Maquina]{
-  #(m.bebida) > 0 && m.botaoDeCancelamento = BotaoDeCancelamentoDesativado  => m.status = PedidoFinalizado
+pred statusEmFalta [m: Maquina] {
+	(#getBebida[m] = 0) => (#getPedidoEmFalta[m]) > 0  &&  (getTroco[m] = m.valorInserido)
 }
 
-pred bebidaCancelada[m: Maquina]{
-  m.botaoDeCancelamento = BotaoDeCancelamentoAtivado => m.status = PedidoCancelado && m.troco = 0
-}
-
-pred bebidaEmFalta[m: Maquina]{
- #(m.bebida) = 0 => m.status = PedidoEmFalta
+pred statusFinalizado [m : Maquina]{
+   (#getBotaoDesativado[m] > 0) && (#getBebida[m] > 0) => (#getPedidoFinalizado[m]) > 0
 }
 
 
@@ -177,11 +154,37 @@ fun getValorAdicional[m: Maquina] : Int{
    mul[#(m.bebida.adicional),50]
 }
 
-fun getTroco[m: Maquina]: Int{
-   minus[m.valorInserido,plus[100,getValorAdicional[m]]]
+fun getBebida [m: Maquina]: set Bebida{
+    m.bebida
 }
 
+fun getTroco[m:Maquina]: Int{
+   m.troco
+}
 
+fun getBotaoAtivado [m: Maquina] : set BotaoDeCancelamentoAtivado {
+    BotaoDeCancelamentoAtivado & m.botaoDeCancelamento
+}
+
+fun getBotaoDesativado [m: Maquina] : set BotaoDeCancelamentoDesativado {
+    BotaoDeCancelamentoDesativado & m.botaoDeCancelamento
+}
+
+fun getPedidoCancelado [m: Maquina] : set PedidoCancelado {
+    PedidoCancelado & m.status
+}
+
+fun getPedidoEmFalta [m: Maquina] : set PedidoEmFalta{
+   PedidoEmFalta & m.status
+}
+
+fun getPedidoFinalizado [m: Maquina] : set PedidoFinalizado{
+   PedidoFinalizado & m.status
+}
+
+fun calcularTroco[m: Maquina]: Int{
+   minus[m.valorInserido,plus[100,getValorAdicional[m]]]
+}
 ----------------------------------------------------------
 --		        RUN		       --
 ----------------------------------------------------------
