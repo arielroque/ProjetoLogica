@@ -3,7 +3,7 @@ module MaquinaBebidasQuentes
 ----------------------------------------------------------
 --		   ASSINATURAS	            --
 ----------------------------------------------------------
-sig Maquina{
+one sig Maquina{
     bebida: lone Bebida,
     botaoDeCancelamento: set BotaoCancelar,
     valorInserido: one Int,
@@ -23,8 +23,10 @@ sig BotaoDeCancelamentoDesativado extends BotaoCancelar{}
 
 abstract sig Bebida{
    tamanho: one Tamanho,
+   valor: one Int,
    adocamento: lone Adocamento,
-   adicional: set Adicional
+   adicional: set Adicional,
+   //teste: Int
 }
 
 sig Cafe extends Bebida{}
@@ -44,15 +46,13 @@ sig Adocante extends Adocamento{}
 ----------------------------------------------------------
 --			FATOS		       --
 ----------------------------------------------------------
-fact maquinaExiste{
-  all m: Maquina | #(m) > 0
-}
-fact maquinaNaoRequerBebida{
-   all m: Maquina | #(m.bebida) >= 0
-}
+//fact maquinaExiste{
+  //all m: Maquina | #(m) = 1
+//}
+
 
 fact valorInseridoDeveSerPositivo{
-    all m: Maquina | m.valorInserido >= 100
+    all m: Maquina | m.valorInserido >= 50
 }
 
 fact valorInseridoPermitido{
@@ -67,8 +67,9 @@ fact adicionalRequerBebida{
    all a: Adicional | #(a.~adicional) > 0
 }
 
+
 fact adicionalDependeDoValorInserido{
-  all  b: Bebida | #(b.adicional) > -1 && #(b.adicional) < getQuantMaximaAdicional[b.~bebida]
+  all  m: Maquina  | #(m.bebida.adicional) >= 0 && #(m.bebida.adicional) <= getQuantMaximaAdicional[m]
 }
 
 fact botaoCancelarRequerMaquina{
@@ -92,13 +93,21 @@ fact adocamentoRequerBebida{
 }
 
 fact statusRequerMaquina{
-  all s: Status | #(s.~status) > 0  
+  all s: Status | #(s.~status) = 1  
+}
+
+fact precoBebida{
+  all m: Maquina | precoBebidaMaior100[m]
+  all m: Maquina | precoBebidaMenor100[m]
+  all m: Maquina | tamanhoGrande[m.bebida]
+  all m: Maquina | tamanhoPequeno[m.bebida]
 }
 
 fact trocoMaquina{
   all m: Maquina | trocoMoeda50[m]
   all m: Maquina | trocoMoeda25[m]
   all m: Maquina | trocoVazio[m]
+  //all m: Maquina | m.bebida.teste = getQuantMaximaAdicional[m]
 }
 
 fact statusPedido{
@@ -107,11 +116,28 @@ fact statusPedido{
    all m: Maquina | statusFinalizado[m]
 }
 
+
 ----------------------------------------------------------
 --			PREDICADOS	       --
 ----------------------------------------------------------
 pred moedasPermitidas[m: Maquina]{
     rem[m.valorInserido,100] = 0 || rem[m.valorInserido,25] = 0 || rem[m.valorInserido,50] = 0
+}
+
+pred precoBebidaMaior100[m: Maquina]{
+  (getValorInserido[m] > 99) => (getValorBebida[m.bebida] = 100) || (getValorBebida[m.bebida] = 50)
+} 
+
+pred precoBebidaMenor100[m: Maquina]{
+  (getValorInserido[m] < 99) && (getValorInserido[m] > 49) => (getValorBebida[m.bebida] = 50)
+}
+
+pred tamanhoGrande[b: Bebida]{
+     (getValorBebida[b] = 100) => (#getTamanhoGrande[b]) > 0
+}
+
+pred tamanhoPequeno[b: Bebida]{
+     (getValorBebida[b] = 50) => (#getTamanhoPequeno[b]) > 0
 }
 
 pred trocoMoeda50[m : Maquina]{
@@ -141,9 +167,24 @@ pred statusFinalizado [m : Maquina]{
 ----------------------------------------------------------
 --			FUNCOES		       --
 ----------------------------------------------------------
+fun getTamanhoGrande [b: Bebida]: set TamanhoGrande{
+    TamanhoGrande & b.tamanho
+}
+
+fun getTamanhoPequeno [b: Bebida]: set TamanhoPequeno{
+   TamanhoPequeno & b.tamanho
+}
+
+fun getValorInserido[m: Maquina]: Int{
+   m.valorInserido
+}
+
+fun getValorBebida[b: Bebida]: Int{
+   b.valor
+}
 
 fun getValorInseridoMenosBebida[m : Maquina]: Int{
-    minus[m.valorInserido,100]
+    minus[getValorInserido[m],getValorBebida[m.bebida]]
 }
 
 fun getQuantMaximaAdicional[m: Maquina] : Int{
@@ -155,7 +196,7 @@ fun getValorAdicional[m: Maquina] : Int{
 }
 
 fun getBebida [m: Maquina]: set Bebida{
-    m.bebida
+    m.bebida & Bebida
 }
 
 fun getTroco[m:Maquina]: Int{
@@ -182,31 +223,56 @@ fun getPedidoFinalizado [m: Maquina] : set PedidoFinalizado{
    PedidoFinalizado & m.status
 }
 
+fun getValorGasto[m: Maquina]: Int{
+   plus[getValorBebida[m.bebida],getValorAdicional[m]]
+}
+
 fun calcularTroco[m: Maquina]: Int{
-   minus[m.valorInserido,plus[100,getValorAdicional[m]]]
+   minus[getValorInserido[m],getValorGasto[m]]
 }
 ----------------------------------------------------------
 --		        RUN		       --
 ----------------------------------------------------------
-pred show[] {}
-run show for 10 Int
+//pred show[] {}
+//run show for 10 Int
 
 -----------------------------------------------------------
 --			ASSERTS			 --
 -----------------------------------------------------------
+
 assert testMaquinaComOuSemBebida{
-  all b: Bebida | #(b) = 0
+  all b: Bebida | (#b = 0) || (#b = 1) 
 }
 
-assert testBebidaComVariasAdicoesDeLeite{
-  some b: Bebida | #(b.adicional) > 1
+assert testBebidaComOuSemAdocamento{
+  all b: Bebida | (#b.adocamento >= 0)
+}
+
+assert testBebidaComOuSemAdicional{
+  all b: Bebida | (#b.adicional >= 0)
+}
+
+assert testTrocoMaquinaSemBebida{
+  all m: Maquina | (#getBebida[m] > 0)
+}
+
+assert testTrocoBebidaCancelada{
+ all m: Maquina | (#getBotaoAtivado[m] > 0) => (getTroco[m] = 0)
+}
+
+assert testValorInseridoMaiorIgualGasto{
+ all m: Maquina | (getValorInserido[m] >= getValorGasto[m])
 }
 
 -----------------------------------------------------------
 --			CHECKS			 --
 -----------------------------------------------------------
-check testBebidaComVariasAdicoesDeLeite for 1
-check  testMaquinaComOuSemBebida for 10
+//check testMaquinaComOuSemBebida for 10 int
+//check testBebidaComOuSemAdicional for 10 int
+//check testBebidaComOuSemAdocamento for 10 int
+//check testTrocoMaquinaSemBebida for 10 int
+//check testTrocoBebidaCancelada for 10 int
+check testValorInseridoMaiorIgualGasto for 10 int
 
 
 
