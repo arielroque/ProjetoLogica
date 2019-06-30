@@ -16,7 +16,6 @@ sig PedidoFinalizado extends Status{}
 sig PedidoEmFalta extends Status{}
 sig PedidoCancelado extends Status{}
 
-
 abstract sig BotaoCancelar{}
 sig BotaoDeCancelamentoAtivado extends BotaoCancelar{}
 sig BotaoDeCancelamentoDesativado extends BotaoCancelar{}
@@ -25,8 +24,7 @@ abstract sig Bebida{
    tamanho: one Tamanho,
    valor: one Int,
    adocamento: lone Adocamento,
-   adicional: set Adicional,
-   //teste: Int
+   adicional: set Adicional
 }
 
 sig Cafe extends Bebida{}
@@ -46,11 +44,6 @@ sig Adocante extends Adocamento{}
 ----------------------------------------------------------
 --			FATOS		       --
 ----------------------------------------------------------
-//fact maquinaExiste{
-  //all m: Maquina | #(m) = 1
-//}
-
-
 fact valorInseridoDeveSerPositivo{
     all m: Maquina | m.valorInserido >= 50
 }
@@ -66,7 +59,6 @@ fact bebidaRequerMaquina{
 fact adicionalRequerBebida{
    all a: Adicional | #(a.~adicional) > 0
 }
-
 
 fact adicionalDependeDoValorInserido{
   all  m: Maquina  | #(m.bebida.adicional) >= 0 && #(m.bebida.adicional) <= getQuantMaximaAdicional[m]
@@ -97,8 +89,8 @@ fact statusRequerMaquina{
 }
 
 fact precoBebida{
-  all m: Maquina | precoBebidaMaior100[m]
   all m: Maquina | precoBebidaMenor100[m]
+  all m: Maquina | precoBebidaMaior100[m]
   all m: Maquina | tamanhoGrande[m.bebida]
   all m: Maquina | tamanhoPequeno[m.bebida]
 }
@@ -107,7 +99,6 @@ fact trocoMaquina{
   all m: Maquina | trocoMoeda50[m]
   all m: Maquina | trocoMoeda25[m]
   all m: Maquina | trocoVazio[m]
-  //all m: Maquina | m.bebida.teste = getQuantMaximaAdicional[m]
 }
 
 fact statusPedido{
@@ -115,8 +106,6 @@ fact statusPedido{
    all m: Maquina | statusEmFalta[m]
    all m: Maquina | statusFinalizado[m]
 }
-
-
 ----------------------------------------------------------
 --			PREDICADOS	       --
 ----------------------------------------------------------
@@ -125,11 +114,12 @@ pred moedasPermitidas[m: Maquina]{
 }
 
 pred precoBebidaMaior100[m: Maquina]{
-  (getValorInserido[m] > 99) => (getValorBebida[m.bebida] = 100) || (getValorBebida[m.bebida] = 50)
+  (getValorInserido[m] > 99) => (#getBebida[m] = 0) || (getValorBebida[m.bebida] = 100) || (getValorBebida[m.bebida] = 50)
 } 
 
 pred precoBebidaMenor100[m: Maquina]{
-  (getValorInserido[m] < 99) && (getValorInserido[m] > 49) => (getValorBebida[m.bebida] = 50)
+  (getValorInserido[m] > 49) && (getValorInserido[m] < 100) => (#getBebida[m] = 0) || (getValorBebida[m.bebida] = 50)
+ 
 }
 
 pred tamanhoGrande[b: Bebida]{
@@ -162,8 +152,6 @@ pred statusEmFalta [m: Maquina] {
 pred statusFinalizado [m : Maquina]{
    (#getBotaoDesativado[m] > 0) && (#getBebida[m] > 0) => (#getPedidoFinalizado[m]) > 0
 }
-
-
 ----------------------------------------------------------
 --			FUNCOES		       --
 ----------------------------------------------------------
@@ -233,15 +221,15 @@ fun calcularTroco[m: Maquina]: Int{
 ----------------------------------------------------------
 --		        RUN		       --
 ----------------------------------------------------------
-//pred show[] {}
-//run show for 10 Int
+pred show[] {}
+run show for 10 Int
 
 -----------------------------------------------------------
 --			ASSERTS			 --
 -----------------------------------------------------------
 
 assert testMaquinaComOuSemBebida{
-  all b: Bebida | (#b = 0) || (#b = 1) 
+  all m: Maquina | (#getBebida[m] = 0) || (#getBebida[m] = 1) 
 }
 
 assert testBebidaComOuSemAdocamento{
@@ -253,7 +241,7 @@ assert testBebidaComOuSemAdicional{
 }
 
 assert testTrocoMaquinaSemBebida{
-  all m: Maquina | (#getBebida[m] > 0)
+  all m: Maquina | (#getBebida[m] = 0) => (getTroco[m] = getValorInserido[m])
 }
 
 assert testTrocoBebidaCancelada{
@@ -267,11 +255,11 @@ assert testValorInseridoMaiorIgualGasto{
 -----------------------------------------------------------
 --			CHECKS			 --
 -----------------------------------------------------------
-//check testMaquinaComOuSemBebida for 10 int
-//check testBebidaComOuSemAdicional for 10 int
-//check testBebidaComOuSemAdocamento for 10 int
-//check testTrocoMaquinaSemBebida for 10 int
-//check testTrocoBebidaCancelada for 10 int
+check testMaquinaComOuSemBebida for 10 int
+check testBebidaComOuSemAdicional for 10 int
+check testBebidaComOuSemAdocamento for 10 int
+check testTrocoMaquinaSemBebida for 10 int
+check testTrocoBebidaCancelada for 10 int
 check testValorInseridoMaiorIgualGasto for 10 int
 
 
