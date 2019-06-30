@@ -251,7 +251,6 @@ assert testTrocoBebidaCancelada{
 assert testValorInseridoMaiorIgualGasto{
  all m: Maquina | (getValorInserido[m] >= getValorGasto[m])
 }
-
 -----------------------------------------------------------
 --			CHECKS			 --
 -----------------------------------------------------------
