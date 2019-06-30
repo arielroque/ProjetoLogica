@@ -45,7 +45,7 @@ sig Adocante extends Adocamento{}
 --			FATOS		       --
 ----------------------------------------------------------
 fact valorInseridoDeveSerPositivo{
-    all m: Maquina | m.valorInserido >= 50
+    all m: Maquina | getValorInserido[m] >= 50
 }
 
 fact valorInseridoPermitido{
@@ -110,7 +110,7 @@ fact statusPedido{
 --			PREDICADOS	       --
 ----------------------------------------------------------
 pred moedasPermitidas[m: Maquina]{
-    rem[m.valorInserido,100] = 0 || rem[m.valorInserido,25] = 0 || rem[m.valorInserido,50] = 0
+    rem[getValorInserido[m],100] = 0 || rem[getValorInserido[m],25] = 0 || rem[getValorInserido[m],50] = 0
 }
 
 pred precoBebidaMaior100[m: Maquina]{
@@ -146,7 +146,7 @@ pred statusCancelado [m: Maquina] {
 }
 
 pred statusEmFalta [m: Maquina] {
-	(#getBebida[m] = 0) => (#getPedidoEmFalta[m]) > 0  &&  (getTroco[m] = m.valorInserido)
+	(#getBebida[m] = 0) => (#getPedidoEmFalta[m]) > 0  &&  (getTroco[m] = getValorInserido[m])
 }
 
 pred statusFinalizado [m : Maquina]{
