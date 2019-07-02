@@ -22,7 +22,8 @@ sig BotaoDeCancelamentoDesativado extends BotaoCancelar{}
 
 abstract sig Bebida{
    tamanho: one Tamanho,
-   valor: one Int,
+   valorBebida: one Int,
+   valorDosAdicionais: one Int,
    adocamento: lone Adocamento,
    adicional: set Adicional
 }
@@ -44,11 +45,8 @@ sig Adocante extends Adocamento{}
 ----------------------------------------------------------
 --			FATOS		       --
 ----------------------------------------------------------
-fact valorInseridoDeveSerPositivo{
-    all m: Maquina | getValorInserido[m] >= 50
-}
-
-fact valorInseridoPermitido{
+fact valorInserido{
+    all m: Maquina | getValorInserido[m] >= 50 && getValorInserido[m] <= 300
     all m: Maquina | moedasPermitidas[m]
 }
 
@@ -123,11 +121,11 @@ pred precoBebidaMenor100[m: Maquina]{
 }
 
 pred tamanhoGrande[b: Bebida]{
-     (getValorBebida[b] = 100) => (#getTamanhoGrande[b]) > 0
+     (getValorBebida[b] = 100) => (#getTamanhoGrande[b]) > 0 && (getValorDosAdicionais[b]) = getValorTotalAdicional[b.~bebida]
 }
 
 pred tamanhoPequeno[b: Bebida]{
-     (getValorBebida[b] = 50) => (#getTamanhoPequeno[b]) > 0
+     (getValorBebida[b] = 50) => (#getTamanhoPequeno[b]) > 0 && (getValorDosAdicionais[b]) = getValorTotalAdicional[b.~bebida]
 }
 
 pred trocoMoeda50[m : Maquina]{
@@ -153,7 +151,7 @@ pred statusFinalizado [m : Maquina]{
    (#getBotaoDesativado[m] > 0) && (#getBebida[m] > 0) => (#getPedidoFinalizado[m]) > 0
 }
 ----------------------------------------------------------
---			FUNCOES		       --
+--			FUNCOES		         --
 ----------------------------------------------------------
 fun getTamanhoGrande [b: Bebida]: set TamanhoGrande{
     TamanhoGrande & b.tamanho
@@ -168,7 +166,11 @@ fun getValorInserido[m: Maquina]: Int{
 }
 
 fun getValorBebida[b: Bebida]: Int{
-   b.valor
+   b.valorBebida
+}
+
+fun getValorDosAdicionais[b: Bebida]: Int{
+  b.valorDosAdicionais
 }
 
 fun getValorInseridoMenosBebida[m : Maquina]: Int{
@@ -179,7 +181,7 @@ fun getQuantMaximaAdicional[m: Maquina] : Int{
    div[getValorInseridoMenosBebida[m],50]
 }
 
-fun getValorAdicional[m: Maquina] : Int{
+fun getValorTotalAdicional[m: Maquina] : Int{
    mul[#(m.bebida.adicional),50]
 }
 
@@ -212,7 +214,7 @@ fun getPedidoFinalizado [m: Maquina] : set PedidoFinalizado{
 }
 
 fun getValorGasto[m: Maquina]: Int{
-   plus[getValorBebida[m.bebida],getValorAdicional[m]]
+   plus[getValorBebida[m.bebida],getValorTotalAdicional[m]]
 }
 
 fun calcularTroco[m: Maquina]: Int{
