@@ -7,7 +7,7 @@
 
    :arrow_right:  Todas as bebidas podem ter ou não a adição de leite, açúcar e adoçante, em copos grandes ou pequenos. 
 
-   :arrow_right:  Cada bebida custa R$1,00, e adição de leite aumenta o preço em 50 centavos. 
+   :arrow_right:  Cada bebida pequena custa R$ 0,50, cada bebida grande custa R$1,00, e adição de leite aumenta o preço em 50 centavos. 
    
    :arrow_right:  O usuário deve inserir moedas, até que o valor seja suficiente para a bebida que ele quer. 
                  Depois disso, ele seleciona as opções (bebida, leite, forma de adoçar). 
