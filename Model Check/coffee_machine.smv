@@ -1,0 +1,137 @@
+MODULE main
+
+VAR
+
+    funcao: { inserindo_moeda, escolhendo_bebida, escolhendo_tamanho, escolhendo_forma_adocar, 
+              escolhendo_leite, em_preparo, gerando_troco, cancelando, pode_retirar };
+    bebida: { cafe, cha, chocolate_quente, nada };
+    tamanhoCopo: { grande, pequeno, nada };
+    leite: boolean;
+    formaAdocar: { acucar, adocante, sem_adocante };
+    moeda: { moeda_1_real, moeda_50_cent };
+    moeda1real: 0..2;
+    moeda50cent: 0..4;
+    cancelado: boolean;
+    troco: boolean;
+
+ASSIGN
+
+    init(funcao) := inserindo_moeda;
+    init(bebida) := nada;
+    init(tamanhoCopo) := pequeno;
+    init(leite) := FALSE;
+    init(formaAdocar) := sem_adocante;
+    init(troco) := FALSE;
+    init(cancelado) := FALSE;
+
+    next(funcao) := case
+        funcao = inserindo_moeda & ( moeda1real > 0 | moeda50cent > 0 ) & cancelado = FALSE : { escolhendo_bebida, inserindo_moeda };
+        funcao = inserindo_moeda & moeda1real = 2 & moeda50cent = 0 : { escolhendo_bebida };
+        funcao = inserindo_moeda & moeda1real = 1 & moeda50cent = 2 : { escolhendo_bebida };
+        funcao = inserindo_moeda & moeda1real = 0 & moeda50cent = 4 : { escolhendo_bebida };
+        funcao = escolhendo_bebida & bebida != nada & cancelado = FALSE : { escolhendo_tamanho };
+        funcao = escolhendo_tamanho & cancelado = FALSE : { escolhendo_leite };
+        funcao = escolhendo_leite & cancelado = FALSE : { escolhendo_forma_adocar };
+        funcao = escolhendo_forma_adocar & cancelado = FALSE : { em_preparo };
+        funcao = em_preparo : { gerando_troco };
+        funcao = gerando_troco : { pode_retirar };
+        funcao = pode_retirar : { inserindo_moeda };
+        funcao = cancelando : { inserindo_moeda };
+        cancelado = TRUE : { cancelando };
+        TRUE : { inserindo_moeda };
+    esac;
+    
+    next(cancelado) := case
+        funcao != em_preparo & funcao != gerando_troco & funcao != pode_retirar : { TRUE, FALSE };
+        TRUE : { FALSE };
+    esac;
+
+    next(moeda1real) := case
+        funcao = inserindo_moeda & moeda = moeda_1_real & moeda1real = 0 & moeda50cent = 0 : { 1 };
+        funcao = inserindo_moeda & moeda = moeda_1_real & moeda1real = 0 & moeda50cent <= 2 : { 1 };
+        funcao = inserindo_moeda & moeda = moeda_1_real & moeda1real = 1 & moeda50cent = 0 : { 2 };
+        TRUE : { 0 };
+    esac;
+
+    next(moeda50cent) := case 
+        funcao = inserindo_moeda & moeda = moeda_50_cent & moeda1real = 0 & moeda50cent = 0 : { 1 };
+        funcao = inserindo_moeda & moeda = moeda_50_cent & moeda1real = 1 & moeda50cent = 0 : { 1 };
+        funcao = inserindo_moeda & moeda = moeda_50_cent & moeda1real = 0 & moeda50cent = 1 : { 2 };
+        funcao = inserindo_moeda & moeda = moeda_50_cent & moeda1real = 1 & moeda50cent = 1 : { 2 };
+        funcao = inserindo_moeda & moeda = moeda_50_cent & moeda1real = 0 & moeda50cent = 2 : { 3 };
+        funcao = inserindo_moeda & moeda = moeda_50_cent & moeda1real = 0 & moeda50cent = 3 : { 4 };
+        TRUE : { 0 };
+    esac;
+
+    next(bebida) := case
+        funcao = escolhendo_bebida : { cafe, cha, chocolate_quente };
+        TRUE : { nada };
+    esac;
+
+    next(tamanhoCopo) := case
+        funcao = escolhendo_tamanho & moeda1real = 0 & moeda50cent = 1 : { pequeno };         -- 0.50 real
+        funcao = escolhendo_tamanho & moeda1real = 1 & moeda50cent = 0 : { pequeno, grande }; -- 1.00 real
+        funcao = escolhendo_tamanho & moeda1real = 0 & moeda50cent = 2 : { pequeno, grande }; -- 1.00 real
+        funcao = escolhendo_tamanho & moeda1real = 1 & moeda50cent = 1 : { pequeno, grande }; -- 1.50 real
+        funcao = escolhendo_tamanho & moeda1real = 0 & moeda50cent = 3 : { pequeno, grande }; -- 1.50 real
+        funcao = escolhendo_tamanho & moeda1real = 2 & moeda50cent = 0 : { pequeno, grande }; -- 2.00 real
+        funcao = escolhendo_tamanho & moeda1real = 1 & moeda50cent = 2 : { pequeno, grande }; -- 2.00 real
+        funcao = escolhendo_tamanho & moeda1real = 0 & moeda50cent = 4 : { pequeno, grande }; -- 2.00 real
+        TRUE : { pequeno };
+    esac;
+
+    next(leite) := case -- P = copo pequeno, G = copo grande
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 1 & tamanhoCopo = pequeno : { FALSE };       -- P e 0.50
+        funcao = escolhendo_leite & moeda1real = 1 & moeda50cent = 0 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 1.00
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 2 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 1.00
+        funcao = escolhendo_leite & moeda1real = 1 & moeda50cent = 1 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 1.50
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 3 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 1.50
+        funcao = escolhendo_leite & moeda1real = 2 & moeda50cent = 0 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 2.00
+        funcao = escolhendo_leite & moeda1real = 1 & moeda50cent = 2 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 2.00
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 4 & tamanhoCopo = pequeno : { TRUE, FALSE }; -- P e 2.00
+        funcao = escolhendo_leite & moeda1real = 1 & moeda50cent = 0 & tamanhoCopo = grande : { FALSE };        -- G e 1.00
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 2 & tamanhoCopo = grande : { FALSE };        -- G e 1.00
+        funcao = escolhendo_leite & moeda1real = 1 & moeda50cent = 1 & tamanhoCopo = grande : { TRUE, FALSE }; -- G e 1.50
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 3 & tamanhoCopo = grande : { TRUE, FALSE }; -- G e 1.50
+        funcao = escolhendo_leite & moeda1real = 2 & moeda50cent = 0 & tamanhoCopo = grande : { TRUE, FALSE }; -- G e 2.00
+        funcao = escolhendo_leite & moeda1real = 1 & moeda50cent = 2 & tamanhoCopo = grande : { TRUE, FALSE }; -- G e 2.00
+        funcao = escolhendo_leite & moeda1real = 0 & moeda50cent = 4 & tamanhoCopo = grande : { TRUE, FALSE }; -- G e 2.00
+        TRUE : { FALSE };
+    esac;
+
+    next(formaAdocar) := case
+        funcao = escolhendo_forma_adocar : { acucar, adocante, sem_adocante };
+        TRUE : { sem_adocante }; 
+    esac;
+
+    next(troco) := case -- SL = sem leite, CL = com leite
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 1 & tamanhoCopo = pequeno : { FALSE };                 -- P e 0.50
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 0 & tamanhoCopo = pequeno & leite = FALSE : { TRUE };  -- P e SL e 1.00
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 0 & tamanhoCopo = pequeno & leite = TRUE : { FALSE };  -- P e CL e 1.00
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 2 & tamanhoCopo = pequeno & leite = FALSE : { TRUE };  -- P e SL e 1.00
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 2 & tamanhoCopo = pequeno & leite = TRUE : { FALSE };  -- P e CL e 1.00
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 1 & tamanhoCopo = pequeno : { TRUE };                  -- P e SL/CL e 1.50
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 3 & tamanhoCopo = pequeno : { TRUE };                  -- P e SL/CL e 1.50
+        funcao = gerando_troco & moeda1real = 2 & moeda50cent = 0 & tamanhoCopo = pequeno : { TRUE };                  -- P e SL/CL e 2.00
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 2 & tamanhoCopo = pequeno : { TRUE };                  -- P e SL/CL e 2.00
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 4 & tamanhoCopo = pequeno : { TRUE };                  -- P e SL/CL e 2.00
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 0 & tamanhoCopo = grande : { FALSE };                  -- G e 1.00
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 2 & tamanhoCopo = grande : { FALSE };                  -- G e 1.00
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 1 & tamanhoCopo = grande & leite = TRUE: { FALSE };    -- G e CL e 1.50
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 1 & tamanhoCopo = grande & leite = FALSE: { TRUE };    -- G e SL e 1.50
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 3 & tamanhoCopo = grande & leite = TRUE: { FALSE };    -- G e CL e 1.50
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 3 & tamanhoCopo = grande & leite = FALSE: { TRUE };    -- G e SL e 1.50
+        funcao = gerando_troco & moeda1real = 2 & moeda50cent = 0 & tamanhoCopo = grande : { TRUE };                   -- G e SL/CL e 2.00
+        funcao = gerando_troco & moeda1real = 1 & moeda50cent = 2 & tamanhoCopo = grande : { TRUE };                   -- G e SL/CL e 2.00
+        funcao = gerando_troco & moeda1real = 0 & moeda50cent = 4 & tamanhoCopo = grande : { TRUE };                   -- G e SL/CL e 2.00
+        TRUE : { FALSE };
+    esac;
+    
+    -- TESTES --
+
+    SPEC AG !(funcao = inserindo_moeda & bebida != nada) -- Não pode ter bebida selecionada antes de terminar de inserir as moedas
+    SPEC AG !(funcao != inserindo_moeda & funcao != escolhendo_bebida & bebida = nada) -- a bebida pode apenas não ter sido escolhida quando ele esta inserindo as moedas ou enquanto ele escolhe a bebida
+    SPEC AG (funcao = escolhendo_leite & cancelado = TRUE) -- ele pode cancelar quando esta escolhendo leite
+    SPEC AG (moeda1real = 1 & tamanhoCopo = pequeno & leite = TRUE & troco = FALSE) -- não irá existir troco ao se inserir 1 real e pedir um copo pequeno de bebida com adicional leite
+    SPEC AG (moeda50cent = 4 & tamanhoCopo = pequeno & leite = TRUE & troco = FALSE) -- irá existir troco ao se inserir 2 reais e pedir um copo pequeno de bebida com adicional leite
+    SPEC AG !(moeda1real = 3) -- Não é permitido inserir mais de 2 reais
